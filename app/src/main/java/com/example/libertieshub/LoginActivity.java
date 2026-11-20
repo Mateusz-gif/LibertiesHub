@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -50,14 +51,14 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (registerMode) {
                     showLoginForm();
+                } else {
+                    loginUser();
                 }
             }
         });
     }
-
     private void showRegisterForm() {
 
         registerMode = true;
@@ -125,5 +126,39 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     }
                 });
-    }
-}
+            }
+            private void loginUser() {
+
+            String email = emailEditText.getText().toString().trim();
+            String password = passwordEditText.getText().toString();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, R.string.empty_fields, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(Task<AuthResult> task) {
+
+                            if (task.isSuccessful()) {
+
+                                Toast.makeText(LoginActivity.this,
+                                        R.string.login_success,
+                                        Toast.LENGTH_SHORT).show();
+
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(LoginActivity.this,
+                                        getString(R.string.login_failed)
+                                                + ": " + task.getException().getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+           }
+        }
+
