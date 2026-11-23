@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 public class MainActivity extends AppCompatActivity {
     ListView eventsListView;
@@ -29,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> allTitles;
     ArrayList<String> allKeys;
+    Spinner categorySpinner;
+    ArrayList<String> allCategories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +41,11 @@ public class MainActivity extends AppCompatActivity {
         eventsListView = findViewById(R.id.eventsListView);
         searchEditText = findViewById(R.id.searchEditText);
         searchButton = findViewById(R.id.searchButton);
+        categorySpinner = findViewById(R.id.categorySpinner);
 
         allTitles = new ArrayList<>();
         allKeys = new ArrayList<>();
+        allCategories = new ArrayList<>();
 
         eventTitles = new ArrayList<>();
         eventKeys = new ArrayList<>();
@@ -49,6 +54,38 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, eventTitles);
 
         eventsListView.setAdapter(adapter);
+
+        String[] categories = {
+                "All Categories",
+                "Education",
+                "Health & Fitness",
+                "Other",
+                "Music",
+                "Sports",
+                "Arts & Culture",
+                "Food & Markets"
+        };
+
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, categories);
+
+        categoryAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item);
+
+        categorySpinner.setAdapter(categoryAdapter);
+
+        categorySpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent,
+                                               View view, int position, long id) {
+                        searchEvents();
+                    }
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
 
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
@@ -60,14 +97,19 @@ public class MainActivity extends AppCompatActivity {
 
                 allTitles.clear();
                 allKeys.clear();
+                allCategories.clear();
 
                 for (DataSnapshot eventSnapshot : dataSnapshot.getChildren()) {
                     String title = eventSnapshot.child("title")
                             .getValue(String.class);
 
+                    String category = eventSnapshot.child("category")
+                            .getValue(String.class);
+
                     if (title != null) {
                         allTitles.add(title);
                         allKeys.add(eventSnapshot.getKey());
+                        allCategories.add(category);
                     }
                 }
                 searchEvents();
@@ -107,18 +149,55 @@ public class MainActivity extends AppCompatActivity {
         String searchText = searchEditText.getText()
                 .toString().trim().toLowerCase();
 
+        String selectedCategory = categorySpinner.getSelectedItem()
+                .toString();
+
         eventTitles.clear();
         eventKeys.clear();
 
         for (int i = 0; i < allTitles.size(); i++) {
-            String title = allTitles.get(i);
 
-            if (title.toLowerCase().contains(searchText)) {
+            String title = allTitles.get(i);
+            String category = getAppCategory(allCategories.get(i));
+
+            boolean matchesSearch =
+                    title.toLowerCase().contains(searchText);
+
+            boolean matchesCategory =
+                    selectedCategory.equals("All Categories")
+                            || selectedCategory.equals(category);
+
+            if (matchesSearch && matchesCategory) {
                 eventTitles.add(title);
                 eventKeys.add(allKeys.get(i));
             }
         }
 
         adapter.notifyDataSetChanged();
+    }
+    private String getAppCategory(String category) {
+
+        if ("Education & Skills".equals(category)) {
+            return "Education";
+        }
+
+        if ("Health & Wellbeing".equals(category)) {
+            return "Health & Fitness";
+        }
+
+        if ("Arts & Culture".equals(category)) {
+            return "Arts & Culture";
+        }
+
+        if ("Education".equals(category) ||
+                "Health & Fitness".equals(category) ||
+                "Music".equals(category) ||
+                "Sports".equals(category) ||
+                "Food & Markets".equals(category)) {
+
+            return category;
+        }
+
+        return "Other";
     }
    }
