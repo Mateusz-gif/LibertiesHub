@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
     ListView eventsListView;
@@ -22,14 +24,27 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<String> adapter;
     DatabaseReference eventsRef;
 
+    EditText searchEditText;
+    Button searchButton;
+
+    ArrayList<String> allTitles;
+    ArrayList<String> allKeys;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         eventsListView = findViewById(R.id.eventsListView);
+        searchEditText = findViewById(R.id.searchEditText);
+        searchButton = findViewById(R.id.searchButton);
+
+        allTitles = new ArrayList<>();
+        allKeys = new ArrayList<>();
+
         eventTitles = new ArrayList<>();
         eventKeys = new ArrayList<>();
+
         adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, eventTitles);
 
@@ -43,19 +58,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                eventTitles.clear();
-                eventKeys.clear();
+                allTitles.clear();
+                allKeys.clear();
 
                 for (DataSnapshot eventSnapshot : dataSnapshot.getChildren()) {
                     String title = eventSnapshot.child("title")
                             .getValue(String.class);
 
                     if (title != null) {
-                        eventTitles.add(title);
-                        eventKeys.add(eventSnapshot.getKey());
+                        allTitles.add(title);
+                        allKeys.add(eventSnapshot.getKey());
                     }
                 }
-                adapter.notifyDataSetChanged();
+                searchEvents();
             }
 
             @Override
@@ -64,6 +79,14 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this,
                         databaseError.getMessage(),
                         Toast.LENGTH_LONG).show();
+            }
+        });
+
+        searchButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                searchEvents();
             }
         });
 
@@ -79,4 +102,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
        }
+       private void searchEvents() {
+
+        String searchText = searchEditText.getText()
+                .toString().trim().toLowerCase();
+
+        eventTitles.clear();
+        eventKeys.clear();
+
+        for (int i = 0; i < allTitles.size(); i++) {
+            String title = allTitles.get(i);
+
+            if (title.toLowerCase().contains(searchText)) {
+                eventTitles.add(title);
+                eventKeys.add(allKeys.get(i));
+            }
+        }
+
+        adapter.notifyDataSetChanged();
+    }
    }
