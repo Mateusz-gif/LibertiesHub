@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Liberties Hub</string>
+    <string name="login_title">Liberties Hub</string>
+    <string name="login_subtitle">Discover your local community</string>
+    <string name="email_hint">Email Address</string>
+    <string name="password_hint">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="create_account">Create Account</string>
+
+
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="register_account">Register</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="empty_fields">Please fill in all fields</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="password_short">Password must be at least 6 characters</string>
+    <string name="registration_success">Account created successfully</string>
+    <string name="registration_failed">Registration failed</string>
+
+    <string name="login_success">Login successful</string>
+    <string name="login_failed">Login failed</string>
+
+</resources>
