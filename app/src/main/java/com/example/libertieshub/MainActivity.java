@@ -11,10 +11,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
+import android.content.Intent;
+import android.view.View;
+import android.widget.AdapterView;
 
 public class MainActivity extends AppCompatActivity {
     ListView eventsListView;
     ArrayList<String> eventTitles;
+    ArrayList<String> eventKeys;
     ArrayAdapter<String> adapter;
     DatabaseReference eventsRef;
 
@@ -25,8 +29,10 @@ public class MainActivity extends AppCompatActivity {
 
         eventsListView = findViewById(R.id.eventsListView);
         eventTitles = new ArrayList<>();
+        eventKeys = new ArrayList<>();
         adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, eventTitles);
+
         eventsListView.setAdapter(adapter);
 
         FirebaseDatabase database = FirebaseDatabase.getInstance(
@@ -38,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 eventTitles.clear();
+                eventKeys.clear();
 
                 for (DataSnapshot eventSnapshot : dataSnapshot.getChildren()) {
                     String title = eventSnapshot.child("title")
@@ -45,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
                     if (title != null) {
                         eventTitles.add(title);
+                        eventKeys.add(eventSnapshot.getKey());
                     }
                 }
                 adapter.notifyDataSetChanged();
@@ -58,5 +66,17 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
         });
-    }
-}
+
+        eventsListView.setOnItemClickListener(
+                new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent,
+                                            View view, int position, long id) {
+                        Intent intent = new Intent(
+                                MainActivity.this, DetailsActivity.class);
+                        intent.putExtra("eventKey", eventKeys.get(position));
+                        startActivity(intent);
+                    }
+                });
+       }
+   }

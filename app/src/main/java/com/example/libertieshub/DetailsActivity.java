@@ -1,0 +1,161 @@
+package com.example.libertieshub;
+
+import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+public class DetailsActivity extends AppCompatActivity {
+    TextView titleTextView, detailsTextView;
+    DatabaseReference eventRef;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_details);
+
+        titleTextView = findViewById(R.id.titleTextView);
+        detailsTextView = findViewById(R.id.detailsTextView);
+
+        String eventKey = getIntent().getStringExtra("eventKey");
+
+        if (eventKey == null) {
+            finish();
+            return;
+        }
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance(
+                "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
+
+        eventRef = database.getReference("community_events")
+                .child(eventKey);
+
+        eventRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot eventSnapshot) {
+
+                if (!eventSnapshot.exists()) {
+                    Toast.makeText(DetailsActivity.this,
+                            "Event not found",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String title = eventSnapshot.child("title")
+                        .getValue(String.class);
+
+                String description = eventSnapshot.child("description")
+                        .getValue(String.class);
+
+                String category = eventSnapshot.child("category")
+                        .getValue(String.class);
+
+                String start = eventSnapshot.child("datetime")
+                        .child("start").getValue(String.class);
+
+                String end = eventSnapshot.child("datetime")
+                        .child("end").getValue(String.class);
+
+                String recurrence = eventSnapshot.child("datetime")
+                        .child("recurrence").getValue(String.class);
+
+                String venue = eventSnapshot.child("location")
+                        .child("venue_name").getValue(String.class);
+
+                String address = eventSnapshot.child("location")
+                        .child("address").getValue(String.class);
+
+                String eircode = eventSnapshot.child("location")
+                        .child("eircode").getValue(String.class);
+
+                String organisation = eventSnapshot
+                        .child("partner_organization")
+                        .child("name").getValue(String.class);
+
+                Long capacity = eventSnapshot.child("capacity")
+                        .getValue(Long.class);
+
+                Boolean isFree = eventSnapshot.child("is_free")
+                        .getValue(Boolean.class);
+
+                String accessibility = "";
+
+                for (DataSnapshot item :
+                        eventSnapshot.child("accessibility").getChildren()) {
+
+                    String feature = item.getValue(String.class);
+
+                    if (feature != null) {
+
+                        if (!accessibility.isEmpty()) {
+                            accessibility += ", ";
+                        }
+
+                        accessibility += feature;
+                    }
+                }
+
+                if (accessibility.isEmpty()) {
+                    accessibility = "Not specified";
+                }
+
+                if (start != null) {
+                    start = start.replace("T", " ").replace("Z", " UTC");
+                }
+
+                if (end != null) {
+                    end = end.replace("T", " ").replace("Z", " UTC");
+                }
+
+                String listingType;
+
+                if ("none".equals(recurrence)) {
+                    listingType = "Event";
+                } else {
+                    listingType = "Service";
+                }
+
+                String price;
+
+                if (Boolean.TRUE.equals(isFree)) {
+                    price = "Free";
+                } else {
+                    price = "Not marked as free";
+                }
+
+                titleTextView.setText(title);
+
+                String details =
+                        "Type: " + listingType + "\n\n" +
+                                "Category: " + category + "\n\n" +
+                                "Description:\n" + description + "\n\n" +
+                                "Start: " + start + "\n" +
+                                "End: " + end + "\n" +
+                                "Recurrence: " + recurrence + "\n\n" +
+                                "Venue: " + venue + "\n" +
+                                "Address: " + address + "\n" +
+                                "Eircode: " + eircode + "\n\n" +
+                                "Organisation: " + organisation + "\n\n" +
+                                "Capacity: " + capacity + "\n" +
+                                "Price: " + price + "\n\n" +
+                                "Accessibility: " + accessibility;
+
+                detailsTextView.setText(details);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+                Toast.makeText(DetailsActivity.this,
+                        databaseError.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+}
