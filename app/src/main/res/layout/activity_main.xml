@@ -52,6 +52,11 @@
         android:id="@+id/categorySpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/nearMeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Near Me (5 km)" />
 
     <Button
         android:id="@+id/mapButton"
