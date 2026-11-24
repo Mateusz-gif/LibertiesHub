@@ -15,11 +15,19 @@ import android.net.Uri;
 import android.view.View;
 import android.widget.Button;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
 public class DetailsActivity extends AppCompatActivity {
     TextView titleTextView, detailsTextView;
     DatabaseReference eventRef;
     Button directionsButton;
     Double latitude, longitude;
+    Button subscribeButton;
+    DatabaseReference subscriptionRef;
+    boolean subscribed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +37,8 @@ public class DetailsActivity extends AppCompatActivity {
         titleTextView = findViewById(R.id.titleTextView);
         detailsTextView = findViewById(R.id.detailsTextView);
         directionsButton = findViewById(R.id.directionsButton);
+        subscribeButton = findViewById(R.id.subscribeButton);
+        subscribeButton.setEnabled(false);
         directionsButton.setEnabled(false);
 
         directionsButton.setOnClickListener(new View.OnClickListener() {
@@ -54,6 +64,64 @@ public class DetailsActivity extends AppCompatActivity {
 
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this,
+                    "Please log in first",
+                    Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        subscriptionRef = database.getReference("subscriptions")
+                .child(user.getUid())
+                .child(eventKey);
+
+        subscriptionRef.addValueEventListener(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                subscribed = dataSnapshot.exists();
+                if (subscribed) {
+                    subscribeButton.setText("Unsubscribe");
+                } else {
+                    subscribeButton.setText("Subscribe");
+                }
+                subscribeButton.setEnabled(true);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(DetailsActivity.this,
+                        databaseError.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+        subscribeButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                subscribeButton.setEnabled(false);
+                Task<Void> task;
+
+                if (subscribed) {
+                    task = subscriptionRef.removeValue();
+                } else {
+                    task = subscriptionRef.setValue(true);
+                }
+                task.addOnCompleteListener(new OnCompleteListener<Void>() {
+
+                    @Override
+                    public void onComplete(Task<Void> task) {
+                        if (!task.isSuccessful()) {
+                            subscribeButton.setEnabled(true);
+                            Toast.makeText(DetailsActivity.this,
+                                    "Could not update subscription",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        });
 
         eventRef = database.getReference("community_events")
                 .child(eventKey);
@@ -143,11 +211,9 @@ public class DetailsActivity extends AppCompatActivity {
                 if (accessibility.isEmpty()) {
                     accessibility = "Not specified";
                 }
-
                 if (start != null) {
                     start = start.replace("T", " ").replace("Z", " UTC");
                 }
-
                 if (end != null) {
                     end = end.replace("T", " ").replace("Z", " UTC");
                 }
@@ -159,9 +225,7 @@ public class DetailsActivity extends AppCompatActivity {
                 } else {
                     listingType = "Service";
                 }
-
                 String price;
-
                 if (Boolean.TRUE.equals(isFree)) {
                     price = "Free";
                 } else {
@@ -169,7 +233,6 @@ public class DetailsActivity extends AppCompatActivity {
                 }
 
                 titleTextView.setText(title);
-
                 String details =
                         "Type: " + listingType + "\n\n" +
                                 "Category: " + category + "\n\n" +
@@ -184,13 +247,11 @@ public class DetailsActivity extends AppCompatActivity {
                                 "Capacity: " + capacity + "\n" +
                                 "Price: " + price + "\n\n" +
                                 "Accessibility: " + accessibility;
-
                 detailsTextView.setText(details);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
                 Toast.makeText(DetailsActivity.this,
                         databaseError.getMessage(),
                         Toast.LENGTH_LONG).show();

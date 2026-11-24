@@ -374,17 +374,13 @@ public class MainActivity extends AppCompatActivity {
                 requestCode, permissions, grantResults);
 
         if (requestCode == 1) {
-
             if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED
                     ||
                     checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
-
                 getUserLocation();
-
             } else {
-
                 Toast.makeText(this,
                         "Location permission is needed for Near Me",
                         Toast.LENGTH_LONG).show();
@@ -393,9 +389,7 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onStop() {
-
         super.onStop();
-
         if (locationListener != null) {
             locationManager.removeUpdates(locationListener);
             locationListener = null;
