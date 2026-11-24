@@ -179,6 +179,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button calendarButton = findViewById(R.id.calendarButton);
+
+        calendarButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        MainActivity.this, CalendarActivity.class);
+
+                startActivity(intent);
+            }
+        });
+
         Button mapButton = findViewById(R.id.mapButton);
         mapButton.setOnClickListener(new View.OnClickListener() {
 

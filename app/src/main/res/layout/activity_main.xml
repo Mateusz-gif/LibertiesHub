@@ -59,6 +59,12 @@
         android:text="Near Me (5 km)" />
 
     <Button
+        android:id="@+id/calendarButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View Calendar" />
+
+    <Button
         android:id="@+id/mapButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
