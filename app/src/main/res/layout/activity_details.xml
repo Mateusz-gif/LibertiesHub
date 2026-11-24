@@ -18,6 +18,12 @@
             android:textStyle="bold"
             android:paddingBottom="20dp" />
 
+        <Button
+            android:id="@+id/directionsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get Directions" />
+
         <TextView
             android:id="@+id/detailsTextView"
             android:layout_width="match_parent"

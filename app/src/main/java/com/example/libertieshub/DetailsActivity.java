@@ -10,9 +10,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.view.View;
+import android.widget.Button;
+
 public class DetailsActivity extends AppCompatActivity {
     TextView titleTextView, detailsTextView;
     DatabaseReference eventRef;
+    Button directionsButton;
+    Double latitude, longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,9 +28,25 @@ public class DetailsActivity extends AppCompatActivity {
 
         titleTextView = findViewById(R.id.titleTextView);
         detailsTextView = findViewById(R.id.detailsTextView);
+        directionsButton = findViewById(R.id.directionsButton);
+        directionsButton.setEnabled(false);
+
+        directionsButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                String url = "https://www.google.com/maps/dir/?api=1&destination="
+                        + latitude + "%2C" + longitude;
+
+                Intent intent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse(url));
+
+                startActivity(intent);
+            }
+        });
 
         String eventKey = getIntent().getStringExtra("eventKey");
-
         if (eventKey == null) {
             finish();
             return;
@@ -39,6 +62,22 @@ public class DetailsActivity extends AppCompatActivity {
 
             @Override
             public void onDataChange(DataSnapshot eventSnapshot) {
+
+                latitude = eventSnapshot
+                        .child("location")
+                        .child("coordinates")
+                        .child("lat")
+                        .getValue(Double.class);
+
+                longitude = eventSnapshot
+                        .child("location")
+                        .child("coordinates")
+                        .child("lng")
+                        .getValue(Double.class);
+
+                if (latitude != null && longitude != null) {
+                    directionsButton.setEnabled(true);
+                }
 
                 if (!eventSnapshot.exists()) {
                     Toast.makeText(DetailsActivity.this,
