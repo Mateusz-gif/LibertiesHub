@@ -24,10 +24,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> eventKeys;
     ArrayAdapter<String> adapter;
     DatabaseReference eventsRef;
-
     EditText searchEditText;
     Button searchButton;
-
     ArrayList<String> allTitles;
     ArrayList<String> allKeys;
     Spinner categorySpinner;
@@ -132,6 +130,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button mapButton = findViewById(R.id.mapButton);
+        mapButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        MainActivity.this, MapsActivity.class);
+                startActivity(intent);
+            }
+        });
+
         eventsListView.setOnItemClickListener(
                 new AdapterView.OnItemClickListener() {
                     @Override
@@ -148,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
 
         String searchText = searchEditText.getText()
                 .toString().trim().toLowerCase();
-
         String selectedCategory = categorySpinner.getSelectedItem()
                 .toString();
 
@@ -156,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
         eventKeys.clear();
 
         for (int i = 0; i < allTitles.size(); i++) {
-
             String title = allTitles.get(i);
             String category = getAppCategory(allCategories.get(i));
 
@@ -172,32 +180,25 @@ public class MainActivity extends AppCompatActivity {
                 eventKeys.add(allKeys.get(i));
             }
         }
-
         adapter.notifyDataSetChanged();
     }
     private String getAppCategory(String category) {
-
         if ("Education & Skills".equals(category)) {
             return "Education";
         }
-
         if ("Health & Wellbeing".equals(category)) {
             return "Health & Fitness";
         }
-
         if ("Arts & Culture".equals(category)) {
             return "Arts & Culture";
         }
-
         if ("Education".equals(category) ||
                 "Health & Fitness".equals(category) ||
                 "Music".equals(category) ||
                 "Sports".equals(category) ||
                 "Food & Markets".equals(category)) {
-
             return category;
         }
-
         return "Other";
     }
    }
