@@ -26,16 +26,12 @@ public class CalendarActivity extends AppCompatActivity {
     CalendarView calendarView;
     ListView calendarEventsListView;
     TextView selectedDateTextView;
-
     ArrayList<String> allTitles;
     ArrayList<String> allKeys;
     ArrayList<String> allDates;
-
     ArrayList<String> eventTitles;
     ArrayList<String> eventKeys;
-
     ArrayAdapter<String> adapter;
-
     String selectedDate;
 
     @Override
@@ -64,7 +60,6 @@ public class CalendarActivity extends AppCompatActivity {
 
         // Start with today's date
         Calendar today = Calendar.getInstance();
-
         selectedDate = String.format(Locale.US,
                 "%04d-%02d-%02d",
                 today.get(Calendar.YEAR),
@@ -88,7 +83,6 @@ public class CalendarActivity extends AppCompatActivity {
                         allDates.clear();
 
                         for (DataSnapshot eventSnapshot : dataSnapshot.getChildren()) {
-
                             String title = eventSnapshot.child("title")
                                     .getValue(String.class);
 
@@ -124,7 +118,6 @@ public class CalendarActivity extends AppCompatActivity {
                                                     int year,
                                                     int month,
                                                     int dayOfMonth) {
-
                         selectedDate = String.format(Locale.US,
                                 "%04d-%02d-%02d",
                                 year, month + 1, dayOfMonth);
@@ -145,7 +138,6 @@ public class CalendarActivity extends AppCompatActivity {
                                             View view,
                                             int position,
                                             long id) {
-
                         Intent intent = new Intent(
                                 CalendarActivity.this,
                                 DetailsActivity.class);
@@ -157,23 +149,19 @@ public class CalendarActivity extends AppCompatActivity {
                     }
                 });
     }
-
     private void showEvents() {
 
         eventTitles.clear();
         eventKeys.clear();
 
         for (int i = 0; i < allTitles.size(); i++) {
-
             String start = allDates.get(i);
 
             if (start.startsWith(selectedDate)) {
-
                 eventTitles.add(allTitles.get(i));
                 eventKeys.add(allKeys.get(i));
             }
         }
-
         adapter.notifyDataSetChanged();
     }
 }

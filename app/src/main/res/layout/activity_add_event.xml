@@ -56,7 +56,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Recurrence (for Services)" />
+            android:text="Recurrence (Services only)" />
 
         <Spinner
             android:id="@+id/recurrenceSpinner"
@@ -92,66 +92,24 @@
             android:inputType="textPostalAddress" />
 
         <EditText
-            android:id="@+id/eircodeEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Eircode"
-            android:inputType="textCapCharacters" />
-
-        <EditText
             android:id="@+id/latitudeEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Latitude (e.g. 53.341)"
+            android:hint="Venue latitude for map (e.g. 53.341)"
             android:inputType="numberDecimal|numberSigned" />
 
         <EditText
             android:id="@+id/longitudeEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Longitude (e.g. -6.279)"
+            android:hint="Venue longitude for map (e.g. -6.279)"
             android:inputType="numberDecimal|numberSigned" />
-
-        <EditText
-            android:id="@+id/organisationEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Organisation Name"
-            android:inputType="textCapWords" />
-
-        <EditText
-            android:id="@+id/capacityEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Capacity"
-            android:inputType="number" />
-
-        <EditText
-            android:id="@+id/accessibilityEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Accessibility features (separate with commas)"
-            android:inputType="textCapSentences" />
-
-        <CheckBox
-            android:id="@+id/freeCheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Free Event / Service"
-            android:checked="true" />
 
         <Button
             android:id="@+id/saveButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save Event / Service" />
-
-        <Button
-            android:id="@+id/deleteButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Delete Event / Service"
-            android:visibility="gone" />
 
     </LinearLayout>
 

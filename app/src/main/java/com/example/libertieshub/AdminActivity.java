@@ -19,60 +19,42 @@ import com.google.firebase.database.ValueEventListener;
 public class AdminActivity extends AppCompatActivity {
 
     LinearLayout adminLayout;
-    Button addEventButton, manageEventsButton, manageSurveysButton;
+    Button addEventButton, manageSurveysButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
+        // Connect buttons to XML
         adminLayout = findViewById(R.id.adminLayout);
-
         addEventButton = findViewById(R.id.addEventButton);
-        manageEventsButton = findViewById(R.id.manageEventsButton);
         manageSurveysButton = findViewById(R.id.manageSurveysButton);
 
-        manageSurveysButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                Intent intent = new Intent(
-                        AdminActivity.this, AdminSurveyActivity.class);
-
-                startActivity(intent);
-            }
-        });
-
-        // Hide administrator buttons until access is verified
+        // Hide admin options until access is verified
         adminLayout.setVisibility(View.GONE);
 
-        // Open the Add Event screen
+        // Open Add Event screen
         addEventButton.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
-
                 Intent intent = new Intent(
                         AdminActivity.this, AddEventActivity.class);
-
                 startActivity(intent);
             }
         });
 
-        // Open the Manage Events screen
-        manageEventsButton.setOnClickListener(new View.OnClickListener() {
-
+        // Open Manage Surveys screen
+        manageSurveysButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 Intent intent = new Intent(
-                        AdminActivity.this, ManageEventsActivity.class);
-
+                        AdminActivity.this, AdminSurveyActivity.class);
                 startActivity(intent);
             }
         });
 
+        // Get logged-in user
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
@@ -80,6 +62,7 @@ public class AdminActivity extends AppCompatActivity {
             return;
         }
 
+        // Check administrator permissions in Firebase
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
 
@@ -93,15 +76,11 @@ public class AdminActivity extends AppCompatActivity {
                         Boolean isAdmin = dataSnapshot.getValue(Boolean.class);
 
                         if (Boolean.TRUE.equals(isAdmin)) {
-
                             adminLayout.setVisibility(View.VISIBLE);
-
                         } else {
-
                             Toast.makeText(AdminActivity.this,
                                     "Administrator access required",
                                     Toast.LENGTH_SHORT).show();
-
                             finish();
                         }
                     }
@@ -112,7 +91,6 @@ public class AdminActivity extends AppCompatActivity {
                         Toast.makeText(AdminActivity.this,
                                 databaseError.getMessage(),
                                 Toast.LENGTH_LONG).show();
-
                         finish();
                     }
                 });

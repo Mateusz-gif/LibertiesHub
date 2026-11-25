@@ -1,40 +1,38 @@
 package com.example.libertieshub;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.view.View;
-import android.widget.Button;
-
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-
-import android.Manifest;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.pm.PackageManager;
-import android.os.Build;
-
 public class DetailsActivity extends AppCompatActivity {
+
     TextView titleTextView, detailsTextView;
-    DatabaseReference eventRef;
-    Button directionsButton;
-    Double latitude, longitude;
-    Button subscribeButton;
-    Button feedbackButton;
+    Button directionsButton, subscribeButton, feedbackButton;
+
     DatabaseReference subscriptionRef;
+    Double latitude, longitude;
     boolean subscribed = false;
 
     @Override
@@ -42,54 +40,35 @@ public class DetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        100);
-            }
-        }
-
+        // Connect XML components
         titleTextView = findViewById(R.id.titleTextView);
         detailsTextView = findViewById(R.id.detailsTextView);
         directionsButton = findViewById(R.id.directionsButton);
         subscribeButton = findViewById(R.id.subscribeButton);
-        subscribeButton.setEnabled(false);
-        directionsButton.setEnabled(false);
         feedbackButton = findViewById(R.id.feedbackButton);
+
+        directionsButton.setEnabled(false);
+        subscribeButton.setEnabled(false);
         feedbackButton.setVisibility(View.GONE);
 
-        directionsButton.setOnClickListener(new View.OnClickListener() {
+        // Request notification permission
+        if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
 
-            @Override
-            public void onClick(View v) {
-
-                String url = "https://www.google.com/maps/dir/?api=1&destination="
-                        + latitude + "%2C" + longitude;
-
-                Intent intent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse(url));
-
-                startActivity(intent);
-            }
-        });
-
+            requestPermissions(
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS}, 100);
+        }
+        // Get selected event
         String eventKey = getIntent().getStringExtra("eventKey");
-        feedbackButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                Intent intent = new Intent(
-                        DetailsActivity.this, SurveyActivity.class);
-
-                intent.putExtra("eventKey", eventKey);
-
-                startActivity(intent);
-            }
-        });
         if (eventKey == null) {
+            finish();
+            return;
+        }
+
+        // Check logged-in user
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
             finish();
             return;
         }
@@ -97,15 +76,40 @@ public class DetailsActivity extends AppCompatActivity {
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
 
-        database.getReference("surveys")
-                .child(eventKey)
-                .child("question")
+        // Open directions in Google Maps
+        directionsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String url = "https://www.google.com/maps/dir/?api=1&destination="
+                        + latitude + "%2C" + longitude;
+
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(intent);
+            }
+        });
+
+        // Open feedback survey
+        feedbackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        DetailsActivity.this, SurveyActivity.class);
+
+                intent.putExtra("eventKey", eventKey);
+                startActivity(intent);
+            }
+        });
+
+        // Check whether a survey exists
+        database.getReference("surveys").child(eventKey).child("question")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
 
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
+                    public void onDataChange(DataSnapshot snapshot) {
 
-                        String question = dataSnapshot.getValue(String.class);
+                        String question = snapshot.getValue(String.class);
 
                         if (question != null && !question.isEmpty()) {
                             feedbackButton.setVisibility(View.VISIBLE);
@@ -113,31 +117,23 @@ public class DetailsActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
+                    public void onCancelled(DatabaseError error) {
                         Toast.makeText(DetailsActivity.this,
-                                databaseError.getMessage(),
-                                Toast.LENGTH_LONG).show();
+                                error.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this,
-                    "Please log in first",
-                    Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
+        // Check subscription status
         subscriptionRef = database.getReference("subscriptions")
-                .child(user.getUid())
-                .child(eventKey);
+                .child(user.getUid()).child(eventKey);
 
         subscriptionRef.addValueEventListener(new ValueEventListener() {
 
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                subscribed = dataSnapshot.exists();
+            public void onDataChange(DataSnapshot snapshot) {
+
+                subscribed = snapshot.exists();
+
                 if (subscribed) {
                     subscribeButton.setText("Unsubscribe");
                 } else {
@@ -145,43 +141,41 @@ public class DetailsActivity extends AppCompatActivity {
                 }
                 subscribeButton.setEnabled(true);
             }
+
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(DatabaseError error) {
                 Toast.makeText(DetailsActivity.this,
-                        databaseError.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                        error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-        subscribeButton.setOnClickListener(new View.OnClickListener() {
 
+        // Subscribe or unsubscribe
+        subscribeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 subscribeButton.setEnabled(false);
-
                 boolean subscribing = !subscribed;
 
                 Task<Void> task;
 
                 if (subscribing) {
-
                     task = subscriptionRef.setValue(true);
-
                 } else {
-
                     task = subscriptionRef.removeValue();
                 }
 
                 task.addOnCompleteListener(new OnCompleteListener<Void>() {
-
                     @Override
                     public void onComplete(Task<Void> task) {
+
                         if (task.isSuccessful()) {
                             if (subscribing) {
                                 showSubscriptionNotification();
                             }
                         } else {
                             subscribeButton.setEnabled(true);
+
                             Toast.makeText(DetailsActivity.this,
                                     "Could not update subscription",
                                     Toast.LENGTH_LONG).show();
@@ -190,94 +184,53 @@ public class DetailsActivity extends AppCompatActivity {
                 });
             }
         });
-        eventRef = database.getReference("community_events")
+
+        // Load event information from Firebase
+        DatabaseReference eventRef = database.getReference("community_events")
                 .child(eventKey);
 
         eventRef.addListenerForSingleValueEvent(new ValueEventListener() {
 
             @Override
-            public void onDataChange(DataSnapshot eventSnapshot) {
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    Toast.makeText(DetailsActivity.this,
+                            "Event not found", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                latitude = eventSnapshot
-                        .child("location")
-                        .child("coordinates")
-                        .child("lat")
+                // Basic event information
+                String title = snapshot.child("title").getValue(String.class);
+                String description = snapshot.child("description")
+                        .getValue(String.class);
+                String category = snapshot.child("category")
+                        .getValue(String.class);
+
+                // Date and recurrence
+                String start = snapshot.child("datetime").child("start")
+                        .getValue(String.class);
+                String end = snapshot.child("datetime").child("end")
+                        .getValue(String.class);
+                String recurrence = snapshot.child("datetime")
+                        .child("recurrence").getValue(String.class);
+
+                // Location
+                DataSnapshot location = snapshot.child("location");
+
+                String venue = location.child("venue_name")
+                        .getValue(String.class);
+                String address = location.child("address")
+                        .getValue(String.class);
+
+                latitude = location.child("coordinates").child("lat")
                         .getValue(Double.class);
-
-                longitude = eventSnapshot
-                        .child("location")
-                        .child("coordinates")
-                        .child("lng")
+                longitude = location.child("coordinates").child("lng")
                         .getValue(Double.class);
 
                 if (latitude != null && longitude != null) {
                     directionsButton.setEnabled(true);
                 }
-
-                if (!eventSnapshot.exists()) {
-                    Toast.makeText(DetailsActivity.this,
-                            "Event not found",
-                            Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                String title = eventSnapshot.child("title")
-                        .getValue(String.class);
-
-                String description = eventSnapshot.child("description")
-                        .getValue(String.class);
-
-                String category = eventSnapshot.child("category")
-                        .getValue(String.class);
-
-                String start = eventSnapshot.child("datetime")
-                        .child("start").getValue(String.class);
-
-                String end = eventSnapshot.child("datetime")
-                        .child("end").getValue(String.class);
-
-                String recurrence = eventSnapshot.child("datetime")
-                        .child("recurrence").getValue(String.class);
-
-                String venue = eventSnapshot.child("location")
-                        .child("venue_name").getValue(String.class);
-
-                String address = eventSnapshot.child("location")
-                        .child("address").getValue(String.class);
-
-                String eircode = eventSnapshot.child("location")
-                        .child("eircode").getValue(String.class);
-
-                String organisation = eventSnapshot
-                        .child("partner_organization")
-                        .child("name").getValue(String.class);
-
-                Long capacity = eventSnapshot.child("capacity")
-                        .getValue(Long.class);
-
-                Boolean isFree = eventSnapshot.child("is_free")
-                        .getValue(Boolean.class);
-
-                String accessibility = "";
-
-                for (DataSnapshot item :
-                        eventSnapshot.child("accessibility").getChildren()) {
-
-                    String feature = item.getValue(String.class);
-
-                    if (feature != null) {
-
-                        if (!accessibility.isEmpty()) {
-                            accessibility += ", ";
-                        }
-
-                        accessibility += feature;
-                    }
-                }
-
-                if (accessibility.isEmpty()) {
-                    accessibility = "Not specified";
-                }
+                // Format dates for display
                 if (start != null) {
                     start = start.replace("T", " ").replace("Z", " UTC");
                 }
@@ -285,21 +238,15 @@ public class DetailsActivity extends AppCompatActivity {
                     end = end.replace("T", " ").replace("Z", " UTC");
                 }
 
-                String listingType;
-
+                // Identify Event or Service
+                String listingType = "Service";
                 if ("none".equals(recurrence)) {
                     listingType = "Event";
-                } else {
-                    listingType = "Service";
-                }
-                String price;
-                if (Boolean.TRUE.equals(isFree)) {
-                    price = "Free";
-                } else {
-                    price = "Not marked as free";
                 }
 
+                // Display main information
                 titleTextView.setText(title);
+
                 String details =
                         "Type: " + listingType + "\n\n" +
                                 "Category: " + category + "\n\n" +
@@ -308,34 +255,44 @@ public class DetailsActivity extends AppCompatActivity {
                                 "End: " + end + "\n" +
                                 "Recurrence: " + recurrence + "\n\n" +
                                 "Venue: " + venue + "\n" +
-                                "Address: " + address + "\n" +
-                                "Eircode: " + eircode + "\n\n" +
-                                "Organisation: " + organisation + "\n\n" +
-                                "Capacity: " + capacity + "\n" +
-                                "Price: " + price + "\n\n" +
-                                "Accessibility: " + accessibility;
+                                "Address: " + address;
+
+                // information about event
+                String organisation = snapshot.child("partner_organization")
+                        .child("name").getValue(String.class);
+
+                Boolean isFree = snapshot.child("is_free")
+                        .getValue(Boolean.class);
+
+                if (organisation != null && !organisation.isEmpty()) {
+                    details += "\n\nOrganisation: " + organisation;
+                }
+                if (isFree != null) {
+                    if (isFree) {
+                        details += "\nPrice: Free";
+                    } else {
+                        details += "\nPrice: Not marked as free";
+                    }
+                }
                 detailsTextView.setText(details);
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(DatabaseError error) {
                 Toast.makeText(DetailsActivity.this,
-                        databaseError.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                        error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
+    // Show notification after subscribing
     private void showSubscriptionNotification() {
 
-        if (Build.VERSION.SDK_INT >= 33) {
-
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
+        if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-
-        NotificationManager notificationManager =
+        NotificationManager manager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         NotificationChannel channel = new NotificationChannel(
@@ -343,17 +300,14 @@ public class DetailsActivity extends AppCompatActivity {
                 "Event Subscriptions",
                 NotificationManager.IMPORTANCE_DEFAULT);
 
-        notificationManager.createNotificationChannel(channel);
+        manager.createNotificationChannel(channel);
 
-        Notification notification = new Notification.Builder(
-                this, "subscriptions")
+        Notification notification = new Notification.Builder(this, "subscriptions")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("Successfully Subscribed!")
-                .setContentText("You subscribed to: "
-                        + titleTextView.getText().toString())
+                .setContentText("You subscribed to: " + titleTextView.getText())
                 .setAutoCancel(true)
                 .build();
-
-        notificationManager.notify(1, notification);
+        manager.notify(1, notification);
     }
 }
