@@ -44,9 +44,13 @@
         <activity
             android:name=".CalendarActivity"
             android:exported="false" />
-
         <activity
             android:name=".AdminActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".AddEventActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>

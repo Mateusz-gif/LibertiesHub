@@ -1,7 +1,9 @@
 package com.example.libertieshub;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -17,6 +19,7 @@ import com.google.firebase.database.ValueEventListener;
 public class AdminActivity extends AppCompatActivity {
 
     LinearLayout adminLayout;
+    Button addEventButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +27,23 @@ public class AdminActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin);
 
         adminLayout = findViewById(R.id.adminLayout);
+        addEventButton = findViewById(R.id.addEventButton);
+
+        // Hide administrator buttons until access is verified
+        adminLayout.setVisibility(View.GONE);
+
+        // Open the Add Event screen
+        addEventButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        AdminActivity.this, AddEventActivity.class);
+
+                startActivity(intent);
+            }
+        });
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -45,21 +65,26 @@ public class AdminActivity extends AppCompatActivity {
                         Boolean isAdmin = dataSnapshot.getValue(Boolean.class);
 
                         if (Boolean.TRUE.equals(isAdmin)) {
+
                             adminLayout.setVisibility(View.VISIBLE);
+
                         } else {
 
                             Toast.makeText(AdminActivity.this,
                                     "Administrator access required",
                                     Toast.LENGTH_SHORT).show();
+
                             finish();
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
+
                         Toast.makeText(AdminActivity.this,
                                 databaseError.getMessage(),
                                 Toast.LENGTH_LONG).show();
+
                         finish();
                     }
                 });

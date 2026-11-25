@@ -29,20 +29,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Add Event / Service"
-        android:enabled="false" />
+        android:enabled="true" />
 
     <Button
         android:id="@+id/manageEventsButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Edit / Delete Events"
-        android:enabled="false" />
+        android:enabled="true" />
 
     <Button
         android:id="@+id/manageSurveysButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Manage Surveys"
-        android:enabled="false" />
+        android:enabled="true" />
 
 </LinearLayout>
