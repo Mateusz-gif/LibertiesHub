@@ -27,7 +27,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".DetailsActivity"
             android:exported="false"
@@ -42,10 +41,14 @@
             android:exported="false"
             android:label="@string/title_activity_maps"
             android:windowSoftInputMode="adjustResize" />
-
         <activity
             android:name=".CalendarActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

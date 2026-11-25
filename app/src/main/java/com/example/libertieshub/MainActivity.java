@@ -22,6 +22,8 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
     ListView eventsListView;
@@ -104,6 +106,40 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
+        Button adminButton = findViewById(R.id.adminButton);
+
+        adminButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        MainActivity.this, AdminActivity.class);
+
+                startActivity(intent);
+            }
+        });
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            database.getReference("admins")
+                    .child(user.getUid())
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            Boolean isAdmin = dataSnapshot.getValue(Boolean.class);
+                            if (Boolean.TRUE.equals(isAdmin)) {
+                                adminButton.setVisibility(View.VISIBLE);
+                            }
+                        }
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Toast.makeText(MainActivity.this,
+                                    databaseError.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+        }
 
         eventsRef = database.getReference("community_events");
         eventsRef.addValueEventListener(new ValueEventListener() {

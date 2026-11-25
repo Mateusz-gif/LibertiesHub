@@ -70,6 +70,13 @@
         android:layout_height="wrap_content"
         android:text="View Map" />
 
+    <Button
+        android:id="@+id/adminButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Admin Dashboard"
+        android:visibility="gone" />
+
     <ListView
         android:id="@+id/eventsListView"
         android:layout_width="match_parent"
