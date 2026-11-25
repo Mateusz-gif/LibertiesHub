@@ -33,6 +33,7 @@ public class DetailsActivity extends AppCompatActivity {
     Button directionsButton;
     Double latitude, longitude;
     Button subscribeButton;
+    Button feedbackButton;
     DatabaseReference subscriptionRef;
     boolean subscribed = false;
 
@@ -56,6 +57,8 @@ public class DetailsActivity extends AppCompatActivity {
         subscribeButton = findViewById(R.id.subscribeButton);
         subscribeButton.setEnabled(false);
         directionsButton.setEnabled(false);
+        feedbackButton = findViewById(R.id.feedbackButton);
+        feedbackButton.setVisibility(View.GONE);
 
         directionsButton.setOnClickListener(new View.OnClickListener() {
 
@@ -73,6 +76,19 @@ public class DetailsActivity extends AppCompatActivity {
         });
 
         String eventKey = getIntent().getStringExtra("eventKey");
+        feedbackButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        DetailsActivity.this, SurveyActivity.class);
+
+                intent.putExtra("eventKey", eventKey);
+
+                startActivity(intent);
+            }
+        });
         if (eventKey == null) {
             finish();
             return;
@@ -80,6 +96,30 @@ public class DetailsActivity extends AppCompatActivity {
 
         FirebaseDatabase database = FirebaseDatabase.getInstance(
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
+
+        database.getReference("surveys")
+                .child(eventKey)
+                .child("question")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        String question = dataSnapshot.getValue(String.class);
+
+                        if (question != null && !question.isEmpty()) {
+                            feedbackButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                        Toast.makeText(DetailsActivity.this,
+                                databaseError.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {

@@ -19,7 +19,7 @@ import com.google.firebase.database.ValueEventListener;
 public class AdminActivity extends AppCompatActivity {
 
     LinearLayout adminLayout;
-    Button addEventButton;
+    Button addEventButton, manageEventsButton, manageSurveysButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +27,22 @@ public class AdminActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin);
 
         adminLayout = findViewById(R.id.adminLayout);
+
         addEventButton = findViewById(R.id.addEventButton);
+        manageEventsButton = findViewById(R.id.manageEventsButton);
+        manageSurveysButton = findViewById(R.id.manageSurveysButton);
+
+        manageSurveysButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        AdminActivity.this, AdminSurveyActivity.class);
+
+                startActivity(intent);
+            }
+        });
 
         // Hide administrator buttons until access is verified
         adminLayout.setVisibility(View.GONE);
@@ -40,6 +55,19 @@ public class AdminActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(
                         AdminActivity.this, AddEventActivity.class);
+
+                startActivity(intent);
+            }
+        });
+
+        // Open the Manage Events screen
+        manageEventsButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(
+                        AdminActivity.this, ManageEventsActivity.class);
 
                 startActivity(intent);
             }

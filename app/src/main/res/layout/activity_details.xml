@@ -30,6 +30,13 @@
             android:layout_height="wrap_content"
             android:text="Subscribe" />
 
+        <Button
+            android:id="@+id/feedbackButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Give Feedback"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/detailsTextView"
             android:layout_width="match_parent"

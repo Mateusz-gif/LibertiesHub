@@ -146,6 +146,13 @@
             android:layout_height="wrap_content"
             android:text="Save Event / Service" />
 
+        <Button
+            android:id="@+id/deleteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete Event / Service"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </ScrollView>

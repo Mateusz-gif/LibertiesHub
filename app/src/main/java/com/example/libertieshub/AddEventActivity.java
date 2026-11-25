@@ -1,5 +1,7 @@
 package com.example.libertieshub;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -19,6 +21,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
 public class AddEventActivity extends AppCompatActivity {
 
     EditText titleEditText, descriptionEditText;
@@ -30,9 +36,10 @@ public class AddEventActivity extends AppCompatActivity {
 
     Spinner typeSpinner, categorySpinner, recurrenceSpinner;
     CheckBox freeCheckBox;
-    Button saveButton;
+    Button saveButton, deleteButton;
 
     DatabaseReference eventsRef;
+    String eventKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +69,8 @@ public class AddEventActivity extends AppCompatActivity {
 
         freeCheckBox = findViewById(R.id.freeCheckBox);
         saveButton = findViewById(R.id.saveButton);
+        deleteButton = findViewById(R.id.deleteButton);
+        deleteButton.setVisibility(View.GONE);
 
         // Event or Service
         String[] types = {"Event", "Service"};
@@ -111,6 +120,26 @@ public class AddEventActivity extends AppCompatActivity {
                 "https://libertieshub-default-rtdb.europe-west1.firebasedatabase.app/");
 
         eventsRef = database.getReference("community_events");
+        eventKey = getIntent().getStringExtra("eventKey");
+
+        if (eventKey != null) {
+
+            // Protect the lecturer's original numbered records
+            if (eventKey.matches("\\d+")) {
+
+                Toast.makeText(this,
+                        "Original events cannot be edited",
+                        Toast.LENGTH_SHORT).show();
+
+                finish();
+                return;
+            }
+
+            saveButton.setText("Save Changes");
+            deleteButton.setVisibility(View.VISIBLE);
+
+            loadEvent();
+        }
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -118,6 +147,164 @@ public class AddEventActivity extends AppCompatActivity {
                 saveEvent();
             }
         });
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmDelete();
+            }
+        });
+    }
+
+    private void loadEvent() {
+
+        eventsRef.child(eventKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot eventSnapshot) {
+
+                        if (!eventSnapshot.exists()) {
+                            Toast.makeText(AddEventActivity.this,
+                                    "Event not found", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        titleEditText.setText(eventSnapshot.child("title")
+                                .getValue(String.class));
+                        descriptionEditText.setText(eventSnapshot.child("description")
+                                .getValue(String.class));
+
+                        String category = eventSnapshot.child("category")
+                                .getValue(String.class);
+
+                        for (int i = 0; i < categorySpinner.getCount(); i++) {
+                            if (categorySpinner.getItemAtPosition(i)
+                                    .toString().equals(category)) {
+                                categorySpinner.setSelection(i);
+                                break;
+                            }
+                        }
+
+                        startEditText.setText(eventSnapshot.child("datetime")
+                                .child("start").getValue(String.class));
+                        endEditText.setText(eventSnapshot.child("datetime")
+                                .child("end").getValue(String.class));
+
+                        String recurrence = eventSnapshot.child("datetime")
+                                .child("recurrence").getValue(String.class);
+
+                        if (recurrence != null && !recurrence.equals("none")) {
+                            typeSpinner.setSelection(1);
+
+                            for (int i = 0; i < recurrenceSpinner.getCount(); i++) {
+                                if (recurrenceSpinner.getItemAtPosition(i)
+                                        .toString().equalsIgnoreCase(recurrence)) {
+                                    recurrenceSpinner.setSelection(i);
+                                    break;
+                                }
+                            }
+                        } else {
+                            typeSpinner.setSelection(0);
+                        }
+
+                        venueEditText.setText(eventSnapshot.child("location")
+                                .child("venue_name").getValue(String.class));
+                        addressEditText.setText(eventSnapshot.child("location")
+                                .child("address").getValue(String.class));
+                        eircodeEditText.setText(eventSnapshot.child("location")
+                                .child("eircode").getValue(String.class));
+
+                        Double latitude = eventSnapshot.child("location")
+                                .child("coordinates").child("lat")
+                                .getValue(Double.class);
+                        Double longitude = eventSnapshot.child("location")
+                                .child("coordinates").child("lng")
+                                .getValue(Double.class);
+
+                        if (latitude != null) {
+                            latitudeEditText.setText(String.valueOf(latitude));
+                        }
+                        if (longitude != null) {
+                            longitudeEditText.setText(String.valueOf(longitude));
+                        }
+
+                        organisationEditText.setText(eventSnapshot
+                                .child("partner_organization").child("name")
+                                .getValue(String.class));
+
+                        Long capacity = eventSnapshot.child("capacity")
+                                .getValue(Long.class);
+                        if (capacity != null) {
+                            capacityEditText.setText(String.valueOf(capacity));
+                        }
+
+                        Boolean isFree = eventSnapshot.child("is_free")
+                                .getValue(Boolean.class);
+                        freeCheckBox.setChecked(Boolean.TRUE.equals(isFree));
+
+                        String accessibility = "";
+                        for (DataSnapshot item : eventSnapshot
+                                .child("accessibility").getChildren()) {
+                            String feature = item.getValue(String.class);
+                            if (feature != null) {
+                                if (!accessibility.isEmpty()) {
+                                    accessibility += ", ";
+                                }
+                                accessibility += feature;
+                            }
+                        }
+                        accessibilityEditText.setText(accessibility);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Toast.makeText(AddEventActivity.this,
+                                databaseError.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void confirmDelete() {
+
+        // Only app-created events can be deleted from this form
+        if (eventKey == null || eventKey.matches("\\d+")) {
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Event / Service")
+                .setMessage("Are you sure you want to delete this? This cannot be undone.")
+                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        deleteButton.setEnabled(false);
+
+                        eventsRef.child(eventKey).removeValue()
+                                .addOnCompleteListener(AddEventActivity.this,
+                                        new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(Task<Void> task) {
+
+                                                if (task.isSuccessful()) {
+                                                    Toast.makeText(AddEventActivity.this,
+                                                            "Event / Service deleted",
+                                                            Toast.LENGTH_SHORT).show();
+                                                    finish();
+                                                } else {
+                                                    deleteButton.setEnabled(true);
+                                                    Toast.makeText(AddEventActivity.this,
+                                                            "Failed to delete",
+                                                            Toast.LENGTH_LONG).show();
+                                                }
+                                            }
+                                        });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void saveEvent() {
@@ -255,10 +442,18 @@ public class AddEventActivity extends AppCompatActivity {
         event.put("is_free", freeCheckBox.isChecked());
         event.put("accessibility", accessibility);
 
-        // Create a new Firebase record
+        // Add a new record or update the selected one
         saveButton.setEnabled(false);
 
-        eventsRef.push().setValue(event)
+        DatabaseReference saveRef;
+
+        if (eventKey == null) {
+            saveRef = eventsRef.push();
+        } else {
+            saveRef = eventsRef.child(eventKey);
+        }
+
+        saveRef.setValue(event)
                 .addOnCompleteListener(this, new OnCompleteListener<Void>() {
 
                     @Override
@@ -267,7 +462,7 @@ public class AddEventActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
 
                             Toast.makeText(AddEventActivity.this,
-                                    "Event / Service added successfully",
+                                    "Event / Service saved successfully",
                                     Toast.LENGTH_SHORT).show();
 
                             finish();
