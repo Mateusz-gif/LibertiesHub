@@ -20,6 +20,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
 public class DetailsActivity extends AppCompatActivity {
     TextView titleTextView, detailsTextView;
     DatabaseReference eventRef;
@@ -33,6 +40,15 @@ public class DetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        100);
+            }
+        }
 
         titleTextView = findViewById(R.id.titleTextView);
         detailsTextView = findViewById(R.id.detailsTextView);
@@ -100,19 +116,31 @@ public class DetailsActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+
                 subscribeButton.setEnabled(false);
+
+                boolean subscribing = !subscribed;
+
                 Task<Void> task;
 
-                if (subscribed) {
-                    task = subscriptionRef.removeValue();
-                } else {
+                if (subscribing) {
+
                     task = subscriptionRef.setValue(true);
+
+                } else {
+
+                    task = subscriptionRef.removeValue();
                 }
+
                 task.addOnCompleteListener(new OnCompleteListener<Void>() {
 
                     @Override
                     public void onComplete(Task<Void> task) {
-                        if (!task.isSuccessful()) {
+                        if (task.isSuccessful()) {
+                            if (subscribing) {
+                                showSubscriptionNotification();
+                            }
+                        } else {
                             subscribeButton.setEnabled(true);
                             Toast.makeText(DetailsActivity.this,
                                     "Could not update subscription",
@@ -122,7 +150,6 @@ public class DetailsActivity extends AppCompatActivity {
                 });
             }
         });
-
         eventRef = database.getReference("community_events")
                 .child(eventKey);
 
@@ -257,5 +284,36 @@ public class DetailsActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+    private void showSubscriptionNotification() {
+
+        if (Build.VERSION.SDK_INT >= 33) {
+
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        NotificationChannel channel = new NotificationChannel(
+                "subscriptions",
+                "Event Subscriptions",
+                NotificationManager.IMPORTANCE_DEFAULT);
+
+        notificationManager.createNotificationChannel(channel);
+
+        Notification notification = new Notification.Builder(
+                this, "subscriptions")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Successfully Subscribed!")
+                .setContentText("You subscribed to: "
+                        + titleTextView.getText().toString())
+                .setAutoCancel(true)
+                .build();
+
+        notificationManager.notify(1, notification);
     }
 }
